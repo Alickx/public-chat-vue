@@ -1,0 +1,88 @@
+syntax = "proto3";
+
+// 生成的包名
+option java_package = "cn.goroute.chat.proto";
+//生成的java名
+option java_outer_classname = "MessageModel";
+
+
+enum HeadType
+{
+    HEAD_TYPE_KEEPALIVE_REQUEST = 0;//心跳请求PING;
+    HEAD_TYPE_KEEPALIVE_RESPONSE = 1; //心跳响应PONG;
+    HEAD_TYPE_MESSAGE_REQUEST = 2;//消息请求;
+    HEAD_TYPE_RESPONSE = 3;//消息回执;
+    HEAD_TYPE_MESSAGE_NOTIFICATION = 4;//通知消息
+    HEAD_TYPE_MESSAGE_AUTHENTICATION_REQUEST = 5;//认证消息
+}
+
+// 消息类型
+enum MessageType {
+    MESSAGE_TYPE_TEXT = 0; // 文本消息
+    MESSAGE_TYPE_IMAGE = 1; // 图片消息
+    MESSAGE_TYPE_VOICE = 2; // 语音消息
+}
+
+// 消息对象类型
+enum IsPrivate {
+    IS_PRIVATE_TRUE = 0; // 私聊
+    IS_PRIVATE_FALSE = 1; // 群聊
+}
+
+message User {
+    uint64 id = 1; // 用户id
+    string username = 2; // 用户名
+    string nick_name = 3; // 昵称
+    string avatar = 4; // 头像
+}
+
+// 聊天消息结构
+message MessageRequest {
+    User sender = 1; // 发送者
+    User receiver = 2; // 接收者
+    string message_content = 3; // 消息内容
+    MessageType type = 4; // 消息类型 1:文本 2:图片 3:语音
+    IsPrivate is_private = 5; // 是否私聊
+    string timestamp = 6; // 时间戳
+    uint64 group_id = 7; // 群id
+}
+
+// 消息回执
+message Response {
+    bool result = 1; //true表示发送成功，false表示发送失败
+    uint32 code = 2;   //错误码
+    string msg = 3;   //错误描述
+    uint32 expose = 4; //错误描述是否提示给用户:1 提示;0 不提示
+}
+
+message AuthenticationRequest {
+    string token = 1; // 用户token
+}
+
+
+//通知消息
+message Notification
+{
+    bool is_private = 1; // 私聊还是群聊
+    bool is_order = 2;  // 普通消息还是命令消息
+    User sender = 3; //谁发的
+    User receiver = 4; //发给谁的
+    MessageType msg_type = 5;  //消息类型  0:文本 1:图片 2:语音
+    string order_name = 6; // 如果是命令消息，消息的名字
+    string content = 7; // 消息内容
+    string timestamp = 8; // 发送时间
+}
+
+
+/*顶层消息*/
+//顶层消息是一种嵌套消息，嵌套了各种类型消息
+//内部的消息类型，全部使用optional字段
+//根据消息类型 type的值，最多只有一个有效
+message Message
+{
+    HeadType type = 1; //消息类型
+    optional MessageRequest message_request = 2; //消息内容
+    optional Response response = 3; //消息响应
+    optional Notification notification = 4; //通知消息
+    optional AuthenticationRequest authentication_request = 5; //认证请求
+}
